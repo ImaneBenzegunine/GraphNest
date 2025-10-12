@@ -60,7 +60,7 @@ pip install "apache-airflow[postgres]==2.7.*" psycopg2
 ```bash
 sudo -u postgres psql
 # Inside psql shell:
-CREATE USER airflow WITH PASSWORD 'Wanrltw1';
+CREATE USER airflow WITH PASSWORD 'user';
 CREATE DATABASE airflow;
 GRANT ALL PRIVILEGES ON DATABASE airflow TO airflow;
 \q
@@ -94,7 +94,7 @@ airflow users create \
     --lastname user \
     --role Admin \
     --email admin@example.com \
-    --password Wanrltw1
+    --password user
 ```
 
 ---

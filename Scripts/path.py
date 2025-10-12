@@ -5,7 +5,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "data", "output")
 PATH_GENE_DATA = os.path.join(BASE_DIR, "data", "output")
 CLEAN_DATA_DIR = os.path.join(BASE_DIR, "data", "clean_data")
 GRAPH_DATA_DIR=os.path.join(BASE_DIR, "data", "graph_data")
-
+DAG_DATA_DIR=os.path.join(BASE_DIR, "airflow", "data","output")
 
 GRAPH_PATH=os.path.join(BASE_DIR, "data", "graph","professional_network.graphml")
 

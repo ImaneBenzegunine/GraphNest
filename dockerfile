@@ -1,14 +1,14 @@
-FROM python:3.8-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install dependencies
+COPY requirements.txt .
 RUN pip install pyorient pandas
 
-# Copy the loader script
-COPY Scripts/loader.py .
+COPY . .
 
-# Copy data (optional - you're also mounting it via compose)
-COPY data/clean_data/ ./data/
-
-CMD ["python", "loader.py"]
+CMD ["python", "Scripts/GraphQL.py"]
+# Dockerfile fix
+RUN mkdir -p ${AIRFLOW_HOME} && \
+    chown -R airflow:airflow ${AIRFLOW_HOME} && \
+    chmod -R 775 ${AIRFLOW_HOME}

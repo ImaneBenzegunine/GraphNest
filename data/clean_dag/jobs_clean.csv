@@ -1,0 +1,51 @@
+job_id,company,title,type,salary,required_skills,is_internship,internship_type
+3601,Accenture,Graph Analyst,Full-time,80092,"{'Data Engineering': 5, 'Python': 4, 'Machine Learning': 3, 'Spark': 3}",False,
+3651,Accenture,Data Scientist,Internship,4115,"{'Spark': 4, 'Pandas': 3, 'Java': 3}",True,PFE
+9364,Accenture,Data Scientist,Internship,2103,"{'Java': 3, 'Scala': 5, 'PySpark': 4, 'Pandas': 4}",True,Summer Internship
+2384,AWS,ML Engineer,Full-time,61806,"{'Python': 5, 'Machine Learning': 3, 'SQL': 4, 'Data Engineering': 4, 'Java': 5}",False,
+7379,Microsoft,Data Engineer,Contract,35434,"{'Pandas': 3, 'SQL': 5, 'Spark': 3, 'Java': 5}",False,
+1888,Meta,Graph Analyst,Part-time,64261,"{'Scala': 5, 'Machine Learning': 3, 'Pandas': 5}",False,
+7363,Accenture,Data Scientist,Part-time,53329,"{'Data Engineering': 3, 'PySpark': 5, 'SQL': 5, 'Spark': 3, 'Scala': 5}",False,
+8196,Amazon,Data Scientist,Full-time,76005,"{'OrientDB': 4, 'Spark': 3, 'Machine Learning': 4, 'Pandas': 3, 'PySpark': 3}",False,
+7871,Accenture,Graph Analyst,Full-time,15540,"{'OrientDB': 3, 'PySpark': 3, 'Python': 5}",False,
+702,Oracle,Data Engineer,Contract,52632,"{'SQL': 3, 'Python': 4, 'Machine Learning': 4, 'Data Engineering': 5, 'Pandas': 5}",False,
+3637,Accenture,Data Engineer,Part-time,30207,"{'Machine Learning': 4, 'Pandas': 3, 'OrientDB': 4, 'Scala': 5, 'Data Engineering': 5}",False,
+5157,Oracle,Database Admin,Part-time,23734,"{'Scala': 4, 'PySpark': 5, 'OrientDB': 4, 'Python': 3, 'Data Engineering': 5}",False,
+5610,AWS,ML Engineer,Contract,39511,"{'SQL': 5, 'Python': 5, 'Pandas': 4, 'Machine Learning': 5}",False,
+3723,Amazon,Database Admin,Contract,75305,"{'Pandas': 5, 'Machine Learning': 5, 'Data Engineering': 3, 'SQL': 4, 'Scala': 3}",False,
+5120,Amazon,ETL Developer,Full-time,39594,"{'Java': 5, 'PySpark': 5, 'SQL': 4}",False,
+3527,IBM,Database Admin,Contract,14086,"{'Pandas': 5, 'Python': 4, 'Machine Learning': 5, 'Spark': 3, 'PySpark': 3}",False,
+3032,Microsoft,Graph Analyst,Full-time,74618,"{'PySpark': 4, 'Machine Learning': 4, 'SQL': 5, 'Data Engineering': 5, 'Spark': 3}",False,
+5523,Microsoft,Data Engineer,Full-time,67625,"{'OrientDB': 3, 'SQL': 4, 'Spark': 3, 'Pandas': 5, 'Data Engineering': 4}",False,
+5987,Microsoft,Data Engineer,Contract,88905,"{'OrientDB': 3, 'SQL': 3, 'Machine Learning': 4, 'Python': 4, 'Scala': 3}",False,
+9271,Google,Data Scientist,Part-time,68676,"{'Scala': 4, 'Java': 4, 'OrientDB': 5, 'SQL': 3}",False,
+3744,Google,Data Scientist,Full-time,43358,"{'PySpark': 3, 'Machine Learning': 4, 'OrientDB': 3, 'Scala': 5}",False,
+520,Meta,ETL Developer,Internship,2588,"{'Java': 5, 'Spark': 4, 'Pandas': 5}",True,Research Internship
+2972,Meta,Database Admin,Internship,3153,"{'Scala': 3, 'OrientDB': 5, 'Machine Learning': 4, 'Python': 4}",True,PFA
+8824,Google,ML Engineer,Internship,2091,"{'Data Engineering': 3, 'OrientDB': 3, 'Machine Learning': 4, 'Spark': 3}",True,Summer Internship
+4770,Microsoft,Database Admin,Full-time,76485,"{'Data Engineering': 4, 'Python': 4, 'Spark': 4}",False,
+7151,AWS,Data Scientist,Contract,35992,"{'Scala': 3, 'PySpark': 5, 'Java': 5, 'Data Engineering': 3}",False,
+9739,Meta,ETL Developer,Internship,3955,"{'Python': 3, 'Scala': 4, 'OrientDB': 4, 'Spark': 5}",True,Research Internship
+3576,AWS,Data Engineer,Internship,2606,"{'Scala': 4, 'Spark': 4, 'Java': 5, 'PySpark': 5}",True,Research Internship
+6554,Meta,ML Engineer,Contract,23039,"{'Machine Learning': 4, 'Data Engineering': 4, 'Java': 5}",False,
+4345,Accenture,Database Admin,Part-time,62212,"{'Java': 4, 'OrientDB': 4, 'Pandas': 4}",False,
+1382,Oracle,ETL Developer,Contract,48537,"{'Java': 3, 'Python': 5, 'Data Engineering': 5, 'Scala': 3}",False,
+1640,AWS,ML Engineer,Internship,2653,"{'Spark': 5, 'Scala': 3, 'Python': 3, 'Machine Learning': 4}",True,PFA
+8961,IBM,Data Engineer,Full-time,70355,"{'Machine Learning': 3, 'Scala': 4, 'Python': 4, 'Pandas': 5, 'PySpark': 4}",False,
+5713,Meta,ETL Developer,Internship,3761,"{'Scala': 4, 'Data Engineering': 4, 'Spark': 3, 'SQL': 5}",True,PFE
+2737,AWS,Database Admin,Internship,3400,"{'Spark': 4, 'Java': 4, 'Data Engineering': 4, 'Python': 4, 'SQL': 4}",True,PFE
+5717,AWS,Database Admin,Part-time,49920,"{'Scala': 3, 'SQL': 5, 'OrientDB': 4}",False,
+5502,Oracle,Data Engineer,Part-time,60395,"{'Java': 4, 'Machine Learning': 4, 'PySpark': 3, 'Data Engineering': 3}",False,
+9907,Amazon,Data Scientist,Full-time,41193,"{'Pandas': 5, 'Machine Learning': 4, 'Java': 4}",False,
+5122,Accenture,Database Admin,Full-time,89112,"{'OrientDB': 3, 'Spark': 5, 'SQL': 4, 'Java': 4}",False,
+2486,Meta,ML Engineer,Internship,3390,"{'Pandas': 5, 'Data Engineering': 4, 'OrientDB': 4}",True,Research Internship
+8604,Oracle,Graph Analyst,Contract,14584,"{'Spark': 3, 'Data Engineering': 5, 'Machine Learning': 4, 'Pandas': 3, 'OrientDB': 5}",False,
+5468,Accenture,Graph Analyst,Part-time,52879,"{'SQL': 3, 'Data Engineering': 3, 'OrientDB': 3, 'Java': 5}",False,
+5259,AWS,Database Admin,Internship,3311,"{'Python': 3, 'Spark': 3, 'Pandas': 4}",True,Research Internship
+2534,Meta,Data Scientist,Full-time,66782,"{'Java': 5, 'Machine Learning': 5, 'Scala': 4, 'Python': 4, 'PySpark': 4}",False,
+1399,Google,Graph Analyst,Contract,67088,"{'Pandas': 3, 'Scala': 3, 'Java': 5, 'Machine Learning': 4, 'Spark': 5}",False,
+1802,IBM,Graph Analyst,Full-time,83437,"{'Spark': 5, 'Python': 3, 'Java': 5, 'OrientDB': 3, 'Scala': 3}",False,
+6454,Meta,ETL Developer,Full-time,75095,"{'Data Engineering': 3, 'Scala': 3, 'Pandas': 3, 'Java': 3}",False,
+1571,Accenture,ETL Developer,Full-time,17078,"{'Scala': 4, 'Data Engineering': 5, 'Python': 3, 'SQL': 4, 'PySpark': 3}",False,
+6134,Google,ETL Developer,Part-time,67946,"{'Pandas': 4, 'Java': 5, 'Data Engineering': 4, 'Python': 4, 'Spark': 3}",False,
+5707,IBM,Graph Analyst,Contract,22005,"{'Java': 5, 'Machine Learning': 5, 'OrientDB': 5, 'Scala': 4}",False,

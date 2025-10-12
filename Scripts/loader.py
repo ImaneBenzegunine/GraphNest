@@ -14,7 +14,7 @@ if not os.path.exists(CLEAN_DATA_DIR):
 # OrientDB Configuration
 ORIENTDB_HOST = os.getenv('ORIENTDB_HOST', 'orientdb')
 ORIENTDB_PORT = int(os.getenv('ORIENTDB_PORT', 2480))
-DB_NAME = os.getenv('ORIENTDB_DB', 'db3')
+DB_NAME = os.getenv('ORIENTDB_DB', 'database_1')
 DB_USER = os.getenv('ORIENTDB_USER', 'root')
 DB_PASSWORD = os.getenv('ORIENTDB_PASSWORD', 'admin')
 
@@ -23,7 +23,7 @@ def get_data_path(filename):
     local_path = os.path.join(CLEAN_DATA_DIR, filename)
     if os.path.exists(local_path):
         return local_path
-    return os.path.join("/app/data", filename)  # Docker fallback
+    return os.path.join("/data", filename)  # Docker fallback
 
 def connect_to_orientdb():
     """Establish connection to OrientDB with environment awareness"""

@@ -324,3 +324,23 @@ WTForms==3.2.1
 xgboost==2.1.4
 yarl==1.18.3
 zipp==3.20.2
+
+
+# extra dependencies:
+graphql-core
+graphql-compiler
+fastapi
+pyorient
+pandas
+uvicorn
+requests
+graphdb
+networkx
+#https://github.com/mogui/pyorient/tarball/develop#egg=pyorient
+apache-airflow
+#wsl --install
+neo4j
+apache-airflow-providers-neo4j
+operators
+pyspark
+apache-airflow-providers-apache-spark==4.1.5

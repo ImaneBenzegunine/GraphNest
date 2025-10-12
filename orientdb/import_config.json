@@ -1,0 +1,45 @@
+{
+  "config": {
+    "log": "debug"
+  },
+  "source": {
+    "file": {
+      "path": "GraphNest/data/clean_data/companies_clean.csv"
+    } 
+  },
+  "extractor": {
+    "row": {}
+  },
+  "transformers": [
+    {
+      "csv": {
+        "separator": ",",
+        "columnsOnFirstLine": true,
+        "columns": ["company_id","name","position","required_skills"],
+        "skipFrom": 1,
+        "skipTo": 0
+      }
+    },
+    {
+      "vertex": {
+        "class": "Company"
+      }
+    }
+  ],
+  "loader": {
+    "orientdb": {
+      "dbURL": "plocal:/orientdb/databases/database_1",
+      "dbUser": "root",
+      "dbPassword": "admin",
+      "serverUser": "root",
+      "serverPassword": "admin",
+      "dbType": "graph",
+      "classes": [
+        {"name": "Company", "extends": "V"}
+      ],
+      "indexes": [
+        {"class":"Company", "fields":["company_id:integer"], "type":"UNIQUE"}
+      ]
+    }
+  }
+}

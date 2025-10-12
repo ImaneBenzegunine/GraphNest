@@ -1,143 +1,156 @@
 import pandas as pd
 import networkx as nx
-import json
-from pathlib import Path
-from typing import Dict, List
-from path import CLEAN_DATA_DIR,GRAPH_DATA_DIR
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
-# Configuration
-INPUT_DIR = CLEAN_DATA_DIR # Docker volume path for input CSVs
-OUTPUT_DIR = GRAPH_DATA_DIR # Docker volume path for graph outputs
-GRAPH_FILE = "professional_network.graphml"
+# Load your existing data
+users = pd.read_csv('data/clean_data/users_clean.csv')
+companies = pd.read_csv('data/clean_data/companies_clean.csv')
+jobs = pd.read_csv('data/clean_data/jobs_clean.csv')
+employment = pd.read_csv('data/clean_data/employment_clean.csv')
 
-def load_clean_data() -> Dict[str, pd.DataFrame]:
-    """Load cleaned CSV files from the volume"""
-    return {
-        "users": pd.read_csv(f"{INPUT_DIR}/users_clean.csv"),
-        "companies": pd.read_csv(f"{INPUT_DIR}/companies_clean.csv"),
-        "jobs": pd.read_csv(f"{INPUT_DIR}/jobs_clean.csv"),
-        "employment": pd.read_csv(f"{INPUT_DIR}/employment_clean.csv")
-    }
-
-def convert_skills(skill_str: str) -> Dict:
-    """Convert string representation of skills to dict"""
+# Convert string representations of dictionaries to actual dictionaries
+def parse_skills(skill_str):
     try:
-        return json.loads(skill_str.replace("'", "\""))
+        return eval(skill_str) if isinstance(skill_str, str) else {}
     except:
         return {}
 
-def create_professional_network(data: Dict[str, pd.DataFrame]) -> nx.Graph:
-    """Create a directed graph of professional relationships"""
-    G = nx.DiGraph()
-    
-    # Add users as nodes
-    for _, user in data["users"].iterrows():
-        G.add_node(
-            user["user_id"],
-            type="user",
-            name=user["name"],
-            skills=convert_skills(user["skills"]),
-            **user[["position", "duration_years"]].to_dict()
-        )
-    
-    # Add companies as nodes
-    for _, company in data["companies"].iterrows():
-        G.add_node(
-            company["company_id"],
-            type="company",
-            name=company["name"],
-            required_skills=convert_skills(company["required_skills"])
-        )
-    
-    # Add employment relationships as edges
-    for _, employment in data["employment"].iterrows():
-        G.add_edge(
-            employment["user_id"],
-            employment["company_id"],
-            relationship="employment",
-            position=employment["position"],
-            start_date=employment["start_date"],
-            end_date=employment["end_date"],
-            skills_used=convert_skills(employment["skills_used"])
-        )
-    
-    # Add skill similarity edges between users
-    user_skills = {
-        row["user_id"]: set(convert_skills(row["skills"]).keys()) 
-        for _, row in data["users"].iterrows()
-    }
-    
-    user_ids = list(user_skills.keys())
-    for i in range(len(user_ids)):
-        for j in range(i+1, len(user_ids)):
-            u1, u2 = user_ids[i], user_ids[j]
-            common_skills = user_skills[u1] & user_skills[u2]
-            if common_skills:
-                G.add_edge(
-                    u1, u2,
-                    relationship="skill_similarity",
-                    weight=len(common_skills)/min(len(user_skills[u1]), len(user_skills[u2])),
-                    common_skills=list(common_skills)
-                )
-    
-    return G
+users['skills'] = users['skills'].apply(parse_skills)
+companies['required_skills'] = companies['required_skills'].apply(parse_skills)
+jobs['required_skills'] = jobs['required_skills'].apply(parse_skills)
+employment['skills_used'] = employment['skills_used'].apply(parse_skills)
 
-def plot_graph(G: nx.Graph, max_nodes: int = 50):
-    """Plot the professional network graph (limited to max_nodes for readability)"""
-    plt.figure(figsize=(12, 12))
+# Create the professional network graph
+G = nx.Graph()
+
+# Add users as nodes with attributes
+for _, user in users.iterrows():
+    G.add_node(f"user_{user['user_id']}", 
+              type='user',
+              name=user['name'],
+              job_title=user['job_title'],
+              company=user['company'],
+              skills=user['skills'])
+
+# Add companies as nodes
+for _, company in companies.iterrows():
+    G.add_node(f"company_{company['company_id']}", 
+              type='company',
+              name=company['name'],
+              required_skills=company['required_skills'])
+
+# Add employment relationships as edges
+for _, emp in employment.iterrows():
+    G.add_edge(f"user_{emp['user_id']}", 
+              f"company_{emp['company_id']}",
+              type='employment',
+              position=emp['position'],
+              start_date=emp['start_date'],
+              end_date=emp['end_date'])
+
+# Calculate user-user connections based on shared skills and companies
+def add_professional_connections(G):
+    # Create skill index
+    skill_to_users = defaultdict(list)
+    for node in G.nodes():
+        if G.nodes[node]['type'] == 'user':
+            for skill in G.nodes[node]['skills']:
+                skill_to_users[skill].append(node)
     
-    # Limit nodes for visualization if too large
-    if len(G.nodes) > max_nodes:
-        sub_nodes = list(G.nodes)[:max_nodes]
-        H = G.subgraph(sub_nodes)
+    # Connect users who share skills
+    for skill, users in skill_to_users.items():
+        if len(users) > 1:
+            for i in range(len(users)):
+                for j in range(i+1, len(users)):
+                    u1, u2 = users[i], users[j]
+                    if not G.has_edge(u1, u2):
+                        skill_overlap = set(G.nodes[u1]['skills'].keys()) & set(G.nodes[u2]['skills'].keys())
+                        G.add_edge(u1, u2,
+                                  type='connection',
+                                  reason='shared_skills',
+                                  weight=len(skill_overlap))
+    
+    # Connect users at same company
+    company_to_users = defaultdict(list)
+    for node in G.nodes():
+        if G.nodes[node]['type'] == 'user' and G.nodes[node]['company']:
+            company_to_users[G.nodes[node]['company']].append(node)
+    
+    for company, users in company_to_users.items():
+        if len(users) > 1:
+            for i in range(len(users)):
+                for j in range(i+1, len(users)):
+                    u1, u2 = users[i], users[j]
+                    if not G.has_edge(u1, u2):
+                        G.add_edge(u1, u2,
+                                  type='connection',
+                                  reason='same_company',
+                                  weight=3)  # Stronger weight for company connections
+
+add_professional_connections(G)
+
+# Analyze the graph
+print("\nNetwork Analysis:")
+print(f"Total nodes: {G.number_of_nodes()}")
+print(f"Total edges: {G.number_of_edges()}")
+print(f"User nodes: {len([n for n in G.nodes() if G.nodes[n]['type'] == 'user'])}")
+print(f"Company nodes: {len([n for n in G.nodes() if G.nodes[n]['type'] == 'company'])}")
+
+# Calculate centrality measures
+degree_centrality = nx.degree_centrality(G)
+betweenness_centrality = nx.betweenness_centrality(G, k=100)  # Sampling for performance
+pagerank = nx.pagerank(G)
+
+# Get top influential users
+top_users = sorted(
+    [(n, pagerank[n]) for n in G.nodes() if G.nodes[n]['type'] == 'user'],
+    key=lambda x: x[1],
+    reverse=True
+)[:5]
+
+print("\nTop 5 Influential Users:")
+for user, score in top_users:
+    print(f"{G.nodes[user]['name']} (Score: {score:.4f}) - {G.nodes[user]['job_title']} at {G.nodes[user]['company']}")
+
+# Visualize a subgraph (for larger graphs, visualize a sample)
+plt.figure(figsize=(12, 10))
+
+# Get a sample of the graph for visualization
+sample_nodes = (
+    [n for n in G.nodes() if G.nodes[n]['type'] == 'user'][:20] +
+    [n for n in G.nodes() if G.nodes[n]['type'] == 'company'][:5]
+)
+H = G.subgraph(sample_nodes)
+
+# Color nodes by type
+node_colors = []
+for node in H.nodes():
+    if H.nodes[node]['type'] == 'user':
+        node_colors.append('lightblue')
     else:
-        H = G
+        node_colors.append('lightgreen')
 
-    pos = nx.spring_layout(H, seed=42)  # Spring layout for nice spacing
-    
-    # Draw nodes by type
-    user_nodes = [n for n, attr in H.nodes(data=True) if attr.get('type') == 'user']
-    company_nodes = [n for n, attr in H.nodes(data=True) if attr.get('type') == 'company']
-    
-    nx.draw_networkx_nodes(H, pos, nodelist=user_nodes, node_color='skyblue', node_size=500, label="Users")
-    nx.draw_networkx_nodes(H, pos, nodelist=company_nodes, node_color='lightgreen', node_size=700, label="Companies")
-    
-    # Draw edges
-    nx.draw_networkx_edges(H, pos, arrows=True, alpha=0.5)
-    
-    # Draw labels
-    labels = {n: attr['name'] for n, attr in H.nodes(data=True)}
-    nx.draw_networkx_labels(H, pos, labels, font_size=9)
-    
-    plt.title("Professional Network Graph")
-    plt.axis('off')
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+# Draw the graph
+pos = nx.spring_layout(H, k=0.5, iterations=50)
+nx.draw(H, pos, with_labels=True, node_color=node_colors, 
+        node_size=800, font_size=10, edge_color='gray')
+plt.title("Professional Network Sample")
+plt.show()
 
+# Save graph metrics to CSV
+metrics = []
+for node in G.nodes():
+    if G.nodes[node]['type'] == 'user':
+        metrics.append({
+            'user_id': node.split('_')[1],
+            'name': G.nodes[node]['name'],
+            'degree_centrality': degree_centrality.get(node, 0),
+            'betweenness_centrality': betweenness_centrality.get(node, 0),
+            'pagerank': pagerank.get(node, 0),
+            'company': G.nodes[node]['company']
+        })
 
-def save_graph(G: nx.Graph, output_dir: str):
-    """Save graph in multiple formats"""
-    Path(output_dir).mkdir(exist_ok=True, parents=True)
-    
-    # Save as GraphML for OrientDB import
-    nx.write_graphml(G, f"{output_dir}/{GRAPH_FILE}")
-    
-    # Save edge list for simple analysis
-    nx.write_edgelist(G, f"{output_dir}/professional_network.edgelist")
-    
-    print(f"Graph saved with {len(G.nodes())} nodes and {len(G.edges())} edges")
-
-if __name__ == "__main__":
-    print("Loading cleaned data...")
-    data = load_clean_data()
-    
-    print("Creating professional network graph...")
-    G = create_professional_network(data)
-    
-    print("Saving graph files...")
-    save_graph(G, OUTPUT_DIR)
-    print("Graph generation complete!")
-    print("Plotting graph...")
-    plot_graph(G)
+metrics_df = pd.DataFrame(metrics)
+metrics_df.to_csv('data/processed/network_metrics.csv', index=False)
+print("\nSaved network metrics to data/processed/network_metrics.csv")

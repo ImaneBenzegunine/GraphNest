@@ -1,7 +1,8 @@
 # Core Airflow dependencies
-apache-airflow==2.5.0
-apache-airflow-providers-apache-spark==3.0.0
+apache-airflow==2.7.3
+apache-airflow-providers-openlineage==1.2.0
 apache-airflow-providers-neo4j==3.1.0
+apache-airflow-providers-apache-spark==3.0.0
 
 # Spark integration
 pyspark==3.3.1

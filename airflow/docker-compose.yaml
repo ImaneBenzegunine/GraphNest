@@ -1,33 +1,65 @@
+version: '3.8'
+
 x-airflow-common:
   &airflow-common
   image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.7.3}
   environment:
     &airflow-common-env
+    AIRFLOW_UID: 0
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    #AIRFLOW__CORE__AUTH_MANAGER: airflow.www.security.DefaultAuthManager
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
-    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
-    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
-    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
-    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-apache-spark apache-airflow-providers-cncf-kubernetes"
   volumes:
-    - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
-    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
-    - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
-    #- ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./config:/opt/airflow/config
+    - ./scripts:/opt/airflow/scripts
+    - ./data:/opt/airflow/data
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
-    redis:
-      condition: service_healthy
     postgres:
       condition: service_healthy
-  command: bash -c "pip install neo4j && airflow webserver"
+
 services:
+  spark-master:
+    container_name: spark-master
+    #image: bitnami/spark:3.5.1
+    #image: bitnami/spark:3.5.1-debian-12-r0
+    image: bitnami/spark:3.4.3
+
+
+    command: ["/opt/bitnami/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s  
+    volumes:
+      - ./dags/scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+      - spark-logs:/opt/spark/spark-events
+    ports:
+      - '8081:8080'
+
+  spark-worker:
+    container_name: spark-worker
+    #image: bitnami/spark:3.5.1
+    #image: bitnami/spark:3.5.1-debian-12-r0
+    image: bitnami/spark:3.4.3
+
+    command: ["/opt/bitnami/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    depends_on:
+      - spark-master
+    volumes:
+      - ./dags/scripts:/opt/spark/scripts
+      - ./data:/opt/spark/data
+      - spark-logs:/opt/spark/spark-events
+
   postgres:
     image: postgres:13
     environment:
@@ -43,25 +75,13 @@ services:
       start_period: 5s
     restart: always
 
-  redis:
-    image: redis:7.2-bookworm
-    expose:
-      - 6379
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 30s
-      retries: 50
-      start_period: 30s
-    restart: always
-
-  airflow-apiserver:
+  airflow-webserver:
     <<: *airflow-common
-    command: api-server
+    command: webserver
     ports:
       - "8080:8080"
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -70,14 +90,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
-    volumes:
-      - ../data/output:/opt/airflow/data/raw
-      - ../data/clean_dag:/opt/airflow/data/clean
-      - ./config:/opt/airflow/config
+
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
@@ -88,98 +103,12 @@ services:
       retries: 5
       start_period: 30s
     restart: always
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      #- ./plugins:/opt/airflow/plugins
-      - ./scripts:/opt/airflow/scripts
-      - ./config:/opt/airflow/config
-      - ../data/output:/opt/airflow/data/raw
-      - ../data/clean_dag:/opt/airflow/data/clean
-
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
 
-  airflow-dag-processor:
-    <<: *airflow-common
-    command: dag-processor
-    healthcheck:
-      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    restart: always
-    
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      #- ./plugins:/opt/airflow/plugins
-      - ./scripts:/opt/airflow/scripts
-      - ./config:/opt/airflow/config
-      - ../data/output:/opt/airflow/data/raw
-      - ../data/clean_dag:/opt/airflow/data/clean
-  
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      airflow-init:
-        condition: service_completed_successfully
-
-  airflow-worker:
-    <<: *airflow-common
-    command: celery worker
-    healthcheck:
-      test:
-        - "CMD-SHELL"
-        - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    environment:
-      <<: *airflow-common-env
-      DUMB_INIT_SETSID: "0"
-    restart: always
-    depends_on:
-      airflow-apiserver:
-        condition: service_healthy
-      airflow-init:
-        condition: service_completed_successfully
-    
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      #- ./plugins:/opt/airflow/plugins
-      - ./scripts:/opt/airflow/scripts
-      - ./config:/opt/airflow/config
-      - ../data/output:/opt/airflow/data/raw
-      - ../data/clean_dag:/opt/airflow/data/clean
-
-  airflow-triggerer:
-    <<: *airflow-common
-    command: triggerer
-    healthcheck:
-      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    restart: always
-    depends_on:
-      airflow-init:
-        condition: service_completed_successfully
-    volumes:
-      - ../data/output:/opt/airflow/data/raw
-      - ../data/clean_dag:/opt/airflow/data/clean
-      - ./config:/opt/airflow/config
   airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash
@@ -190,7 +119,7 @@ services:
         echo "Initializing Airflow DB and configs..."
         if [[ -z "${AIRFLOW_UID}" ]]; then export AIRFLOW_UID=$(id -u); fi
         echo "Setting file ownership for UID: $AIRFLOW_UID"
-        chown -R "${AIRFLOW_UID}:0" /opt/airflow
+        
         airflow db migrate
         airflow users create \
           --username "${_AIRFLOW_WWW_USER_USERNAME:-airflow}" \
@@ -199,34 +128,12 @@ services:
           --lastname User \
           --role Admin \
           --email admin@example.com
-    volumes:
-      - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
-      - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
-      #- ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
-      - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
-      - ${AIRFLOW_PROJ_DIR:-.}/scripts:/opt/airflow/scripts
-    restart: "no"
-  airflow-webserver:
-    image: apache/airflow:2.7.3
-    restart: always
-    depends_on:
-      - postgres
-      - redis
-    ports:
-      - "8080:8080"
-    command: webserver
     environment:
       <<: *airflow-common-env
-    
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-      #- ./plugins:/opt/airflow/plugins
-      - ./scripts:/opt/airflow/scripts
-      - ./config:/opt/airflow/config
-      - ../data/output:/opt/airflow/data/raw
-      - ../data/clean_dag:/opt/airflow/data/clean
-
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+    restart: "no"
 
 volumes:
   postgres-db-volume:
+  spark-logs:
